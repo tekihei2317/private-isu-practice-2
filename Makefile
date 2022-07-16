@@ -12,9 +12,10 @@ reload-app:
 status-app:
 	sudo systemctl status  $(APP_SERVICE)
 
+MYSQL_SERVICE=mysql.service
 reload-mysql:
 	cat settings/mysql/mysql.conf.d/mysqld.cnf | sudo tee /etc/mysql/mysql.conf.d/mysqld.cnf > /dev/null
-	sudo systemctl restart mysql.service
+	sudo systemctl restart $(MYSQL_SERVICE)
 
 MYSQL_USER=isuconp
 MYSQL_PASSWORD=isuconp
