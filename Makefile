@@ -25,7 +25,7 @@ enter-mysql:
 
 # 分析
 ALPSORT=sum
-ALPM="/TODO:"
+ALPM="/@\w+,/posts/[0-9]+,/image/[0-9]+.(jpg|png)"
 OUTFORMAT=count,method,uri,min,max,sum,avg,p99,1xx,2xx,3xx,4xx,5xx
 .PHONY: alp
 alp:
@@ -37,12 +37,13 @@ pt-query-digest:
 bench:
 	/home/isucon/private_isu/benchmarker/bin/benchmarker -u /home/isucon/private_isu/benchmarker/userdata -t http://localhost
 
-analyze:
+clear-logs:
 	echo '' | sudo tee $(NGINX_LOG) > /dev/null
 	echo '' | sudo tee $(MYSQL_LOG) > /dev/null
+
+analyze:
 	$(eval DIR := measurements/$(shell date +%Y%m%d-%H%M%S))
 	mkdir -p $(DIR)
-	@make bench
 	@make alp > $(DIR)/alp.log
 	@make pt-query-digest > $(DIR)/query.log
 
