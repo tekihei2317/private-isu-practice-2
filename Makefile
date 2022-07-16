@@ -4,6 +4,7 @@ MYSQL_LOG=/var/log/mysql/mysql-slow.log
 # サービスの管理
 reload-nginx:
 	cat settings/nginx/nginx.conf | sudo tee /etc/nginx/nginx.conf > /dev/null
+	cat settings/nginx/sites-available/isucon.conf | sudo tee /etc/nginx/sites-available/isucon.conf > /dev/null
 	sudo nginx -s reload
 
 APP_SERVICE=isu-ruby.service
