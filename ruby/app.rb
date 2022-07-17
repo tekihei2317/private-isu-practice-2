@@ -99,9 +99,22 @@ module Isuconp
       end
 
       def make_posts(results, all_comments: false)
+        # コメント数取得
+        comment_count_statement = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?')
+
+        # コメント取得
+        comments_query = 'SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC'
+        unless all_comments
+          comments_query += ' LIMIT 3'
+        end
+        comments_statement = db.prepare(comments_query)
+
+        # ユーザー取得
+        user_statement = db.prepare('SELECT * FROM `users` WHERE `id` = ?')
+
         posts = []
         results.to_a.each do |post|
-          post[:comment_count] = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?').execute(
+          post[:comment_count] = comment_count_statement.execute(
             post[:id]
           ).first[:count]
 
@@ -109,17 +122,17 @@ module Isuconp
           unless all_comments
             query += ' LIMIT 3'
           end
-          comments = db.prepare(query).execute(
+          comments = comments_statement.execute(
             post[:id]
           ).to_a
           comments.each do |comment|
-            comment[:user] = db.prepare('SELECT * FROM `users` WHERE `id` = ?').execute(
+            comment[:user] = user_statement.execute(
               comment[:user_id]
             ).first
           end
           post[:comments] = comments.reverse
 
-          post[:user] = db.prepare('SELECT * FROM `users` WHERE `id` = ?').execute(
+          post[:user] = user_statement.execute(
             post[:user_id]
           ).first
 
