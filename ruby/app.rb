@@ -98,6 +98,56 @@ module Isuconp
         end
       end
 
+      def make_posts_improved(results, all_comments: false)
+        # コメント数取得
+        comment_count_statement = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?')
+
+        # コメント取得
+        comments_query = 'SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC'
+        unless all_comments
+          comments_query += ' LIMIT 3'
+        end
+        comments_statement = db.prepare(comments_query)
+
+        # ユーザー取得
+        user_statement = db.prepare('SELECT * FROM `users` WHERE `id` = ?')
+
+        posts = []
+        results.to_a.each do |post|
+          post[:comment_count] = comment_count_statement.execute(
+            post[:id]
+          ).first[:count]
+
+          query = 'SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC'
+          unless all_comments
+            query += ' LIMIT 3'
+          end
+          comments = comments_statement.execute(
+            post[:id]
+          ).to_a
+          comments.each do |comment|
+            comment[:user] = user_statement.execute(
+              comment[:user_id]
+            ).first
+          end
+          post[:comments] = comments.reverse
+
+          post[:user] = {
+            id: post[:u_id],
+            account_name: post[:u_account_name],
+            passhash: post[:u_passhash],
+            authority: post[:u_authority],
+            del_flg: post[:u_del_flg],
+            created_at: post[:u_created_at],
+          }
+
+          posts.push(post) if post[:user][:del_flg] == 0
+          break if posts.length >= POSTS_PER_PAGE
+        end
+
+        posts
+      end
+
       def make_posts(results, all_comments: false)
         # コメント数取得
         comment_count_statement = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?')
@@ -237,8 +287,25 @@ module Isuconp
     get '/' do
       me = get_session_user()
 
-      results = db.query("SELECT `id`, `user_id`, `body`, `created_at`, `mime` FROM `posts` ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
-      posts = make_posts(results)
+      columns = [
+        # posts
+        'posts.id',
+        'posts.user_id',
+        'posts.body',
+        'posts.created_at',
+        'posts.mime',
+
+        # users
+        'users.id as u_id',
+        'users.account_name as u_account_name',
+        'users.passhash as u_passhash',
+        'users.authority as u_authority',
+        'users.del_flg as u_del_flg',
+        'users.created_at as u_created_at',
+      ]
+
+      results = db.query("SELECT #{columns.join(', ')} FROM `posts` join users on posts.user_id = users.id ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
+      posts = make_posts_improved(results)
 
       erb :index, layout: :layout, locals: { posts: posts, me: me }
     end
