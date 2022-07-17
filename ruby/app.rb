@@ -119,30 +119,29 @@ module Isuconp
           'users.del_flg as u_del_flg',
           'users.created_at as u_created_at',
         ]
-        comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` = ?"
+        post_ids = results.to_a.map { |post| post[:id] }
+        comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` in (#{post_ids.join(', ')})"
         comments_statement = db.prepare(comments_query)
 
-        # ユーザー取得
-        user_statement = db.prepare('SELECT * FROM `users` WHERE `id` = ?')
+        comments = db.query(comments_query).to_a
+        comments = comments.map do |comment|
+          comment[:user] = {
+            id: comment[:u_id],
+            account_name: comment[:u_account_name],
+            passhash: comment[:u_passhash],
+            authority: comment[:u_authority],
+            del_flg: comment[:u_del_flg],
+            created_at: comment[:u_created_at],
+          }
+          comment
+        end
+        comments_group_by_post = comments.group_by { |comment| comment[:post_id] }
 
         posts = []
         results.to_a.each do |post|
-          comments = comments_statement.execute(
-            post[:id]
-          ).to_a
-          post[:comment_count] = comments.size
-
-          comments.each do |comment|
-            comment[:user] = {
-              id: comment[:u_id],
-              account_name: comment[:u_account_name],
-              passhash: comment[:u_passhash],
-              authority: comment[:u_authority],
-              del_flg: comment[:u_del_flg],
-              created_at: comment[:u_created_at],
-            }
-          end
-          post[:comments] = comments.slice(0, 3)
+          post_comments = comments_group_by_post[post[:id]] || [] 
+          post[:comment_count] = post_comments.size
+          post[:comments] = post_comments.slice(0, 3)
 
           post[:user] = {
             id: post[:u_id],
