@@ -103,10 +103,23 @@ module Isuconp
         comment_count_statement = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?')
 
         # コメント取得
-        comments_query = 'SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC'
-        unless all_comments
-          comments_query += ' LIMIT 3'
-        end
+        columns = [
+          # comments
+          'comments.id',
+          'comments.post_id',
+          'comments.user_id',
+          'comments.comment',
+          'comments.created_at',
+
+          # users
+          'users.id as u_id',
+          'users.account_name as u_account_name',
+          'users.passhash as u_passhash',
+          'users.authority as u_authority',
+          'users.del_flg as u_del_flg',
+          'users.created_at as u_created_at',
+        ]
+        comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` = ?"
         comments_statement = db.prepare(comments_query)
 
         # ユーザー取得
@@ -118,19 +131,20 @@ module Isuconp
             post[:id]
           ).first[:count]
 
-          query = 'SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC'
-          unless all_comments
-            query += ' LIMIT 3'
-          end
           comments = comments_statement.execute(
             post[:id]
           ).to_a
           comments.each do |comment|
-            comment[:user] = user_statement.execute(
-              comment[:user_id]
-            ).first
+            comment[:user] = {
+              id: comment[:u_id],
+              account_name: comment[:u_account_name],
+              passhash: comment[:u_passhash],
+              authority: comment[:u_authority],
+              del_flg: comment[:u_del_flg],
+              created_at: comment[:u_created_at],
+            }
           end
-          post[:comments] = comments.reverse
+          post[:comments] = comments.slice(0, 3)
 
           post[:user] = {
             id: post[:u_id],
