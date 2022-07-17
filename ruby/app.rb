@@ -136,21 +136,25 @@ module Isuconp
           'users.del_flg as u_del_flg',
           'users.created_at as u_created_at',
         ]
-        post_ids = results.to_a.map { |post| post[:id] }
-        comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` in (#{post_ids.join(', ')})"
-        comments_statement = db.prepare(comments_query)
 
-        comments = db.query(comments_query).to_a
-        comments = comments.map do |comment|
-          comment[:user] = {
-            id: comment[:u_id],
-            account_name: comment[:u_account_name],
-            passhash: comment[:u_passhash],
-            authority: comment[:u_authority],
-            del_flg: comment[:u_del_flg],
-            created_at: comment[:u_created_at],
-          }
-          comment
+        comments = []
+        if results.to_a.size > 0
+          post_ids = results.to_a.map { |post| post[:id] }
+          comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` in (#{post_ids.join(', ')})"
+          comments_statement = db.prepare(comments_query)
+
+          comments = db.query(comments_query).to_a
+          comments = comments.map do |comment|
+            comment[:user] = {
+              id: comment[:u_id],
+              account_name: comment[:u_account_name],
+              passhash: comment[:u_passhash],
+              authority: comment[:u_authority],
+              del_flg: comment[:u_del_flg],
+              created_at: comment[:u_created_at],
+            }
+            comment
+          end
         end
         comments_group_by_post = comments.group_by { |comment| comment[:post_id] }
 
@@ -331,10 +335,10 @@ module Isuconp
         return 404
       end
 
-      results = db.prepare("SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}").execute(
+      results = db.prepare("SELECT #{POSTS_USERS_COLUMNS.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id WHERE posts.`user_id` = ? ORDER BY posts.`created_at` DESC limit #{POSTS_PER_PAGE}").execute(
         user[:id]
       )
-      posts = make_posts(results)
+      posts = make_posts_improved(results)
 
       comment_count = db.prepare('SELECT COUNT(*) AS count FROM `comments` WHERE `user_id` = ?').execute(
         user[:id]
