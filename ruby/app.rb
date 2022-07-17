@@ -277,7 +277,7 @@ module Isuconp
     end
 
     get '/posts/:id' do
-      results = db.prepare('SELECT * FROM `posts` WHERE `id` = ?').execute(
+      results = db.prepare('SELECT id, user_id, mime, body, created_at FROM `posts` WHERE `id` = ?').execute(
         params[:id]
       )
       posts = make_posts(results, all_comments: true)
@@ -353,7 +353,7 @@ module Isuconp
         return ""
       end
 
-      post = db.prepare('SELECT * FROM `posts` WHERE `id` = ?').execute(params[:id].to_i).first
+      post = db.prepare('SELECT mime, imgdata FROM `posts` WHERE `id` = ?').execute(params[:id].to_i).first
 
       if (params[:ext] == "jpg" && post[:mime] == "image/jpeg") ||
           (params[:ext] == "png" && post[:mime] == "image/png") ||
