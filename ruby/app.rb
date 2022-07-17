@@ -14,6 +14,23 @@ module Isuconp
 
     POSTS_PER_PAGE = 20
 
+    POSTS_USERS_COLUMNS = [
+      # posts
+      'posts.id',
+      'posts.user_id',
+      'posts.body',
+      'posts.created_at',
+      'posts.mime',
+
+      # users
+      'users.id as u_id',
+      'users.account_name as u_account_name',
+      'users.passhash as u_passhash',
+      'users.authority as u_authority',
+      'users.del_flg as u_del_flg',
+      'users.created_at as u_created_at',
+    ]
+
     helpers do
       def config
         @config ||= {
@@ -298,24 +315,7 @@ module Isuconp
     get '/' do
       me = get_session_user()
 
-      columns = [
-        # posts
-        'posts.id',
-        'posts.user_id',
-        'posts.body',
-        'posts.created_at',
-        'posts.mime',
-
-        # users
-        'users.id as u_id',
-        'users.account_name as u_account_name',
-        'users.passhash as u_passhash',
-        'users.authority as u_authority',
-        'users.del_flg as u_del_flg',
-        'users.created_at as u_created_at',
-      ]
-
-      results = db.query("SELECT #{columns.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
+      results = db.query("SELECT #{POSTS_USERS_COLUMNS.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
       posts = make_posts_improved(results)
 
       erb :index, layout: :layout, locals: { posts: posts, me: me }
@@ -359,10 +359,10 @@ module Isuconp
 
     get '/posts' do
       max_created_at = params['max_created_at']
-      results = db.prepare("SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}").execute(
+      results = db.prepare("SELECT #{POSTS_USERS_COLUMNS.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id WHERE `posts`.`created_at` <= ? ORDER BY `posts`.`created_at` DESC limit #{POSTS_PER_PAGE}").execute(
         max_created_at.nil? ? nil : Time.iso8601(max_created_at).localtime
       )
-      posts = make_posts(results)
+      posts = make_posts_improved(results)
 
       erb :posts, layout: false, locals: { posts: posts }
     end
