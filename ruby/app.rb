@@ -355,6 +355,10 @@ module Isuconp
 
       post = db.prepare('SELECT mime, imgdata FROM `posts` WHERE `id` = ?').execute(params[:id].to_i).first
 
+      File.open("/public/image/#{params[:id]}.#{params[:ext]}", "w") do |f|
+        f.print post[:imgdata]
+      end
+
       if (params[:ext] == "jpg" && post[:mime] == "image/jpeg") ||
           (params[:ext] == "png" && post[:mime] == "image/png") ||
           (params[:ext] == "gif" && post[:mime] == "image/gif")

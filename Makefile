@@ -26,7 +26,7 @@ enter-mysql:
 
 # 分析
 ALPSORT=sum
-ALPM="/@\w+,/posts/[0-9]+,/image/[0-9]+.(jpg|png)"
+ALPM="/@\w+,/posts/[0-9]+,/image/[0-9]+.(jpg|png|gif)"
 OUTFORMAT=count,method,uri,min,max,sum,avg,p99,1xx,2xx,3xx,4xx,5xx
 .PHONY: alp
 alp:
