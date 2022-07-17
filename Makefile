@@ -62,4 +62,4 @@ install-alp:
 
 setup:
 	@make install-alp
-	sudo apt update && sudo apt install -y percona-toolkit jq net-tools phpmyadmin
+	sudo apt update && sudo apt install -y percona-toolkit jq net-tools

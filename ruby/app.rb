@@ -45,12 +45,9 @@ module Isuconp
 
       def db_initialize
         sql = []
-        # sql << 'DELETE FROM users WHERE id > 1000'
-        sql << 'DELETE FROM users'
-        # sql << 'DELETE FROM posts WHERE id > 10000'
-        sql << 'DELETE FROM posts'
-        # sql << 'DELETE FROM comments WHERE id > 100000'
-        sql << 'DELETE FROM comments'
+        sql << 'DELETE FROM users WHERE id > 1000'
+        sql << 'DELETE FROM posts WHERE id > 10000'
+        sql << 'DELETE FROM comments WHERE id > 100000'
         sql << 'UPDATE users SET del_flg = 0'
         sql << 'UPDATE users SET del_flg = 1 WHERE id % 50 = 0'
         sql.each do |s|
@@ -328,10 +325,11 @@ module Isuconp
           redirect '/', 302
         end
 
-        query = 'INSERT INTO `posts` (`user_id`, `mime`, `body`) VALUES (?,?,?)'
+        query = 'INSERT INTO `posts` (`user_id`, `mime`, `imgdata`, `body`) VALUES (?,?,?,?)'
         post = db.prepare(query).execute(
           me[:id],
           mime,
+          '', # 画像はNginxから配信するので書き込まない
           params["body"],
         )
         pid = db.last_id
