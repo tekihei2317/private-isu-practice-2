@@ -316,7 +316,7 @@ module Isuconp
         'users.created_at as u_created_at',
       ]
 
-      results = db.query("SELECT #{columns.join(', ')} FROM `posts` join users on posts.user_id = users.id ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
+      results = db.query("SELECT #{columns.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id ORDER BY `created_at` DESC limit #{POSTS_PER_PAGE}")
       posts = make_posts_improved(results)
 
       erb :index, layout: :layout, locals: { posts: posts, me: me }
