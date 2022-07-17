@@ -158,7 +158,8 @@ module Isuconp
         results.to_a.each do |post|
           post_comments = comments_group_by_post[post[:id]] || [] 
           post[:comment_count] = post_comments.size
-          post[:comments] = post_comments.slice(0, 3)
+          post_comments = post_comments.slice(0, 3) unless all_comments
+          post[:comments] = post_comments
 
           post[:user] = {
             id: post[:u_id],
@@ -368,10 +369,10 @@ module Isuconp
     end
 
     get '/posts/:id' do
-      results = db.prepare('SELECT id, user_id, mime, body, created_at FROM `posts` WHERE `id` = ?').execute(
+      results = db.prepare("SELECT #{POSTS_USERS_COLUMNS.join(', ')} FROM `posts` straight_join users on posts.user_id = users.id WHERE posts.`id` = ?").execute(
         params[:id]
       )
-      posts = make_posts(results, all_comments: true)
+      posts = make_posts_improved(results, all_comments: true)
 
       return 404 if posts.length == 0
 
