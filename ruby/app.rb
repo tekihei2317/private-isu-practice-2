@@ -127,13 +127,11 @@ module Isuconp
 
         posts = []
         results.to_a.each do |post|
-          post[:comment_count] = comment_count_statement.execute(
-            post[:id]
-          ).first[:count]
-
           comments = comments_statement.execute(
             post[:id]
           ).to_a
+          post[:comment_count] = comments.size
+
           comments.each do |comment|
             comment[:user] = {
               id: comment[:u_id],
