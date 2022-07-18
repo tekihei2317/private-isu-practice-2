@@ -116,9 +116,6 @@ module Isuconp
       end
 
       def make_posts_improved(results, all_comments: false)
-        # コメント数取得
-        comment_count_statement = db.prepare('SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?')
-
         # コメント取得
         columns = [
           # comments
@@ -141,7 +138,6 @@ module Isuconp
         if results.to_a.size > 0
           post_ids = results.to_a.map { |post| post[:id] }
           comments_query = "SELECT #{columns.join(', ')} FROM `comments` join users on comments.user_id = users.id WHERE `post_id` in (#{post_ids.join(', ')})"
-          comments_statement = db.prepare(comments_query)
 
           comments = db.query(comments_query).to_a
           comments = comments.map do |comment|
