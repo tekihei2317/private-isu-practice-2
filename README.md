@@ -1,7 +1,7 @@
 # private-isu-practice-2
 
 - [catatsuy/private-isu: 社内ISUCON](https://github.com/catatsuy/private-isu)
-- 感想: 
+- 感想: [private-isuで練習した振り返り - tecchaxn's blog](https://blog.tekihei2317.com/articles/c3f4f63a92fde8f59b9dcc75e6aaa8f5/)
 
 ## スコア
 
